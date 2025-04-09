@@ -36,7 +36,7 @@ parser.add_argument('--model',
                     choices=['dark', 'vgg', 'resnet50', 'resnet101', 'resnet152'],
                     help='model for training')
 parser.add_argument('--resume',
-                    default='./weights/dark/dsfd_15000.pth', type=str,
+                    default=None, type=str,
                     help='Checkpoint state_dict file to resume training from')
 parser.add_argument('--num_workers',
                     default=0, type=int,
@@ -60,7 +60,7 @@ parser.add_argument('--multigpu',
                     default=True, type=bool,
                     help='Use mutil Gpu training')
 parser.add_argument('--save_folder',
-                    default='weights/',
+                    default='../model/forDAINet/',
                     help='Directory for saving checkpoint models')
 parser.add_argument('--local_rank',
                     type=int,
