@@ -29,7 +29,7 @@ parser = argparse.ArgumentParser(
     description='DSFD face Detector Training With Pytorch')
 train_set = parser.add_mutually_exclusive_group()
 parser.add_argument('--batch_size',
-                    default=3, type=int,
+                    default=1, type=int,
                     help='Batch size for training')
 parser.add_argument('--model',
                     default='dark', type=str,
@@ -146,14 +146,14 @@ def train():
     if not args.resume:
         if local_rank == 0:
             print('Initializing weights...')
-        net.extras.apply(net.weights_init)
-        net.fpn_topdown.apply(net.weights_init)
-        net.fpn_latlayer.apply(net.weights_init)
-        net.fpn_fem.apply(net.weights_init)
-        net.loc_pal1.apply(net.weights_init)
-        net.conf_pal1.apply(net.weights_init)
-        net.loc_pal2.apply(net.weights_init)
-        net.conf_pal2.apply(net.weights_init)
+        # net.extras.apply(net.weights_init)
+        # net.fpn_topdown.apply(net.weights_init)
+        # net.fpn_latlayer.apply(net.weights_init)
+        # net.fpn_fem.apply(net.weights_init)
+        # net.loc_pal1.apply(net.weights_init)
+        # net.conf_pal1.apply(net.weights_init)
+        # net.loc_pal2.apply(net.weights_init)
+        # net.conf_pal2.apply(net.weights_init)
         net.ref.apply(net.weights_init)
 
     # Scaling the lr
@@ -161,14 +161,14 @@ def train():
     lr = args.lr * np.round(np.sqrt(args.batch_size / 4 * torch.cuda.device_count()),4)
     param_group = []
     param_group += [{'params': dsfd_net.vgg.parameters(), 'lr': lr}]
-    param_group += [{'params': dsfd_net.extras.parameters(), 'lr': lr}]
-    param_group += [{'params': dsfd_net.fpn_topdown.parameters(), 'lr': lr}]
-    param_group += [{'params': dsfd_net.fpn_latlayer.parameters(), 'lr': lr}]
-    param_group += [{'params': dsfd_net.fpn_fem.parameters(), 'lr': lr}]
-    param_group += [{'params': dsfd_net.loc_pal1.parameters(), 'lr': lr}]
-    param_group += [{'params': dsfd_net.conf_pal1.parameters(), 'lr': lr}]
-    param_group += [{'params': dsfd_net.loc_pal2.parameters(), 'lr': lr}]
-    param_group += [{'params': dsfd_net.conf_pal2.parameters(), 'lr': lr}]
+    # param_group += [{'params': dsfd_net.extras.parameters(), 'lr': lr}]
+    # param_group += [{'params': dsfd_net.fpn_topdown.parameters(), 'lr': lr}]
+    # param_group += [{'params': dsfd_net.fpn_latlayer.parameters(), 'lr': lr}]
+    # param_group += [{'params': dsfd_net.fpn_fem.parameters(), 'lr': lr}]
+    # param_group += [{'params': dsfd_net.loc_pal1.parameters(), 'lr': lr}]
+    # param_group += [{'params': dsfd_net.conf_pal1.parameters(), 'lr': lr}]
+    # param_group += [{'params': dsfd_net.loc_pal2.parameters(), 'lr': lr}]
+    # param_group += [{'params': dsfd_net.conf_pal2.parameters(), 'lr': lr}]
     param_group += [{'params': dsfd_net.ref.parameters(), 'lr': lr / 10.}]
 
     optimizer = optim.SGD(param_group, lr=lr, momentum=args.momentum,
@@ -230,7 +230,8 @@ def train():
             R_dark_gt, I_dark = net_enh(img_dark)
             R_light_gt, I_light = net_enh(images)
 
-            out, out2, loss_mutual = net(img_dark, images, I_dark.detach(), I_light.detach())
+            # out, out2, loss_mutual = net(img_dark, images, I_dark.detach(), I_light.detach())
+            out2, loss_mutual = net(img_dark, images, I_dark.detach(), I_light.detach())
             R_dark, R_light, R_dark_2, R_light_2 = out2
             # print( "After net:" )
             # print( f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MB" )
@@ -239,41 +240,43 @@ def train():
             # backprop
             optimizer.zero_grad()
             # 损失函数整理
-            loss_l_pa1l, loss_c_pal1 = criterion(out[:3], targetss)
-            loss_l_pa12, loss_c_pal2 = criterion(out[3:], targetss)
+            if False:
+                loss_l_pa1l, loss_c_pal1 = criterion(out[:3], targetss)
+                loss_l_pa12, loss_c_pal2 = criterion(out[3:], targetss)
 
             loss_enhance = criterion_enhance([R_dark, R_light, R_dark_2, R_light_2, I_dark.detach(), I_light.detach()], images, img_dark) * 0.1
             loss_enhance2 = F.l1_loss(R_dark, R_dark_gt.detach()) + F.l1_loss(R_light, R_light_gt.detach()) + (
                         1. - ssim(R_dark, R_dark_gt.detach())) + (1. - ssim(R_light, R_light_gt.detach()))
 
-            loss = loss_l_pa1l + loss_c_pal1 + loss_l_pa12 + loss_c_pal2 + loss_enhance2 + loss_enhance + loss_mutual
+            # loss = loss_l_pa1l + loss_c_pal1 + loss_l_pa12 + loss_c_pal2 + loss_enhance2 + loss_enhance + loss_mutual
+            loss = loss_enhance2 + loss_enhance + loss_mutual
             # 反向传播
             loss.backward()
             torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=35, norm_type=2)
             optimizer.step()
             t1 = time.time()
             losses += loss.item()
-            loss_l1 += loss_l_pa1l.item()
-            loss_c1 += loss_c_pal1.item()
-            loss_l2 += loss_l_pa12.item()
-            loss_c2 += loss_c_pal2.item()
+            # loss_l1 += loss_l_pa1l.item()
+            # loss_c1 += loss_c_pal1.item()
+            # loss_l2 += loss_l_pa12.item()
+            # loss_c2 += loss_c_pal2.item()
             loss_mu += loss_mutual.item()
             loss_en += loss_enhance.item()
 
             if iteration % 100 == 0:
                 tloss = losses / (batch_idx + 1)
-                tloss_l1 = loss_l1 / (batch_idx + 1)
-                tloss_c1 = loss_c1 / (batch_idx + 1)
-                tloss_l2 = loss_l2 / (batch_idx + 1)
-                tloss_c2 = loss_c2 / (batch_idx + 1)
+                # tloss_l1 = loss_l1 / (batch_idx + 1)
+                # tloss_c1 = loss_c1 / (batch_idx + 1)
+                # tloss_l2 = loss_l2 / (batch_idx + 1)
+                # tloss_c2 = loss_c2 / (batch_idx + 1)
                 tloss_mu = loss_mu / (batch_idx + 1)
                 tloss_en = loss_en / (batch_idx + 1)
                 
                 if local_rank == 0:
                     print( 'Timer: %.4f' % (t1 - t0) )
                     print( 'epoch:' + repr( epoch ) + ' || iter:' + repr( iteration ) + ' || Loss:%.4f' % (tloss) )
-                    print( '->> pal1 conf loss:{:.4f} || pal1 loc loss:{:.4f}'.format( tloss_c1 , tloss_l1 ) )
-                    print( '->> pal2 conf loss:{:.4f} || pal2 loc loss:{:.4f}'.format( tloss_c2 , tloss_l2 ) )
+                    # print( '->> pal1 conf loss:{:.4f} || pal1 loc loss:{:.4f}'.format( tloss_c1 , tloss_l1 ) )
+                    # print( '->> pal2 conf loss:{:.4f} || pal2 loc loss:{:.4f}'.format( tloss_c2 , tloss_l2 ) )
                     print( '->> mutual loss:{:.4f} || enhanced loss:{:.4f}'.format( tloss_mu , tloss_en ) )
                     print( '->>lr:{}'.format( optimizer.param_groups[ 0 ][ 'lr' ] ) )
         
@@ -286,7 +289,14 @@ def train():
             iteration += 1
         # if local_rank == 0:
         if (epoch + 1) >= 0:
-            val(epoch, net, dsfd_net, net_enh, criterion)
+            # val(epoch, net, dsfd_net, net_enh, criterion)
+            global min_loss
+            if tloss < min_loss :
+                if local_rank == 0 :
+                    print( 'Saving best state,epoch' , epoch )
+                    torch.save( dsfd_net.state_dict() , os.path.join(save_folder , 'dsfd.pth' ) )
+                min_loss = tloss
+            
         if iteration >= cfg.MAX_STEPS:
             break
 

@@ -94,37 +94,16 @@ On ExDark:
 - _C.TOP_K = 20时，mAP=14.19
 - _C.TOP_K = 750时，mAP=14.21
 
+## 2025.4.10
+- 完美收敛的结果应该是
+- ->> pal1 conf loss:1.4184 || pal1 loc loss:0.6319
+- ->> pal2 conf loss:1.1226 || pal2 loc loss:0.8053
+- ->> mutual loss:0.0051 || enhanced loss:0.0348
+- 训练的结果还有一段距离
+- ->> pal1 conf loss:1.3814 || pal1 loc loss:2.4703
+- ->> pal2 conf loss:2.0561 || pal2 loc loss:2.3194
+- ->> mutual loss:0.0049 || enhanced loss:0.0627
 
-
-
-## 📑 Citation
-
-If you find this work useful, please cite
-
-``` citation
-@inproceedings{du2024boosting,
-  title={Boosting Object Detection with Zero-Shot Day-Night Domain Adaptation},
-  author={Du, Zhipeng and Shi, Miaojing and Deng, Jiankang},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  pages={12666--12676},
-  year={2024}
-}
-```
-
-or
-
-``` citation
-@article{du2023boosting,
-  title={Boosting Object Detection with Zero-Shot Day-Night Domain Adaptation},
-  author={Du, Zhipeng and Shi, Miaojing and Deng, Jiankang},
-  journal={arXiv preprint arXiv:2312.01220},
-  year={2023}
-}
-```
-
-
-
-## 🔎 Acknowledgement
-
-We thank [DSFD.pytorch](https://github.com/yxlijun/DSFD.pytorch), [RetinexNet_PyTorch](https://github.com/aasharma90/RetinexNet_PyTorch), [MAET](https://github.com/cuiziteng/ICCV_MAET), [HLA-Face](https://github.com/daooshee/HLA-Face-Code) for their amazing works!
-
+## 2025.4.15
+- 直接训练ref部分，测试这个模块能否实现效果
+  - 方案一：去除检测模块，直接训练vgg2和decoder
